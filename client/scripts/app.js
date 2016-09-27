@@ -3,15 +3,14 @@ var app = {
   mainURL: 'https://api.parse.com/1/classes/messages',
   server: 'https://api.parse.com/1/classes/messages?order=-createdAt',
 
-  testMessage: {
-    username: 'Test123',
-    text: 'This is a test',
-    roomname: 'lobby'
-  },
+  friends: [],
 
 
   init: function () {
     this.fetch();
+    setInterval(function() {
+      app.fetch();
+    }, 100);
   },
 
   callback: function() {
@@ -47,7 +46,6 @@ var app = {
       success: function (data) {
         console.log(data);
         app.clearMessages();
-        console.log(data);
         for (var i = 0; i < data.results.length; i++) {
           app.renderMessage(data.results[i]);
         }
@@ -60,8 +58,11 @@ var app = {
   }, 
 
   renderMessage: function(message) {
-    $('#chats').append('<div><a href="#">' + message.username + '</a>: ' + 
-                        message.text + '</div>');
+    if (app.friends.includes(message.username)) {
+      $('#chats').append('<div><span">' + message.username + '</span>: <strong>' + message.text + '</strong></div>');
+    } else { 
+      $('#chats').append('<div><span>' + message.username + '</span>: ' + message.text + '</div>');
+    }
   }, 
 
   renderRoom: function(room) {
@@ -89,4 +90,11 @@ $(document).ready( function () {
   $('.retrieve').click( function () {
     app.fetch();
   });
+});
+
+$(document).on('click', 'span', function (event) {
+  var clickedUsername = event.currentTarget.textContent;
+  if (!app.friends.includes(clickedUsername)) {
+    app.friends.push(clickedUsername);
+  }
 });
