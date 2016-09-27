@@ -5,6 +5,7 @@ var app = {
 
   friends: [],
   rooms: {},
+  currentRoom: '',
 
 
   init: function () {
@@ -18,7 +19,7 @@ var app = {
     var message = {
       username: name,
       text: $('#message').val(),
-      roomname: 'default'
+      roomname: app.currentRoom
     };
 
     return message;
@@ -41,6 +42,7 @@ var app = {
   },
 
   fetch: function () {
+    app.currentRoom = '';
     $.ajax({
       url: this.server,
       type: 'GET',
@@ -60,8 +62,6 @@ var app = {
         }
 
         console.log(app.rooms);
-
-
       }
     });
   },
@@ -73,18 +73,20 @@ var app = {
     // room doesn't exist yet in object
     } else {
       app.rooms[roomname] = 1;
-      $('#myDropdown').append('<li>' + roomname + '</li>');
+      $('#myDropdown').append('<li>' + app.escape(roomname) + '</li>');
     }
   },
   
   clearMessages: function() {
     $('#chats').html('');
-  }, 
+  },
 
-  renderMessage: function(message) {
-    // this tests for empty messages
-    if (message.text !== undefined) {
-      var textArray = message.text.split('');
+  escape: function (input) {
+    // if (input === undefined) {
+    //   input = '++__WHY DOES THIS WORK__++';
+    // }
+    if (input !== undefined) {
+      var textArray = input.split('');
       for (var j = 0; j < textArray.length; j++) {
         if (textArray[j] === '<') {
           textArray[j] = '&lt;';
@@ -92,19 +94,44 @@ var app = {
           textArray[j] = '&gt;';
         }
       }
-      message.text = textArray.join('');
+      input = textArray.join('');
     }
+    return input;
+  },
 
-
+  renderMessage: function(message) {
     if (app.friends.includes(message.username)) {
-      $('#chats').append('<div><span>' + message.username + '</span>: <span class="friend">' + message.text + '</span></div>');
+      $('#chats').append('<div><span>' + app.escape(message.username) + 
+                          '</span>: <span class="friend">' 
+                          + app.escape(message.text) + '</span></div>');
     } else { 
-      $('#chats').append('<div><span>' + message.username + '</span>: ' + message.text + '</div>');
+      $('#chats').append('<div><span>' + app.escape(message.username) + 
+                        '</span>: ' + app.escape(message.text) + '</div>');
     }
   }, 
 
   renderRoom: function(room) {
-    $('#roomSelect').append('<a class="' + room + '"></a>');
+    $.ajax({
+      url: this.server,
+      type: 'GET',
+      success: function (data) {
+        app.clearMessages();
+
+        app.rooms = {};
+        $('#myDropdown').html('');
+
+        for (var i = 0; i < data.results.length; i++) {
+          app.addRooms(data.results[i].roomname);
+          if (data.results[i].roomname === room) {
+            app.renderMessage(data.results[i]);
+          }
+        }
+
+        console.log(app.rooms);
+      }
+    });
+
+    // $('#roomSelect').append('<a class="' + room + '"></a>');
 
   }
 
@@ -139,7 +166,9 @@ $(document).ready( function () {
 
   $(document).on('click', 'li', function (event) {
     var clickedRoom = event.currentTarget.textContent;
+    app.currentRoom = clickedRoom;
     console.log(clickedRoom);
+    app.renderRoom(clickedRoom);
   });
 });
 
