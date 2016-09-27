@@ -8,9 +8,9 @@ var app = {
 
   init: function () {
     this.fetch();
-    setInterval(function() {
-      app.fetch();
-    }, 100);
+    // setInterval(function() {
+    //   app.fetch();
+    // }, 100);
   },
 
   callback: function() {
